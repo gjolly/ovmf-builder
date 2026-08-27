@@ -1,0 +1,49 @@
+name: Build Intel TDX OVMF
+
+on:
+  workflow_dispatch:
+    inputs:
+      digest:
+        description: "edk2 git digest (commit SHA, branch, or tag)"
+        required: true
+        type: string
+      version:
+        description: "Release version/tag (e.g. v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential uuid-dev iasl nasm git python3
+
+      - name: Checkout edk2
+        uses: actions/checkout@v4
+        with:
+          repository: tianocore/edk2
+          ref: ${{ inputs.digest }}
+          submodules: recursive
+
+      - name: Build Intel TDX OVMF (Secure Boot disabled)
+        shell: bash
+        run: |
+          source edksetup.sh
+          build -a X64 -t GCC5 -b RELEASE \
+            -p OvmfPkg/IntelTdx/IntelTdxX64.dsc \
+            -D SECURE_BOOT_ENABLE=FALSE
+
+      - name: Create release and attach OVMF.fd
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ inputs.version }}" \
+            --title "Intel TDX OVMF ${{ inputs.version }}" \
+            --notes "edk2 digest: $(git rev-parse HEAD)" \
+            Build/IntelTdxX64/RELEASE_GCC5/FV/OVMF.fd#OVMF.fd
