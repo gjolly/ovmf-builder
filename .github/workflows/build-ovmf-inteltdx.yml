@@ -35,7 +35,14 @@ jobs:
         shell: bash
         run: |
           source edksetup.sh
-          build -a X64 -t GCC5 -b RELEASE \
+          # tools_def v3.06+ removed the GCC5 tag in favor of GCC; pick
+          # whichever the checked-out digest defines.
+          if grep -qE '^\* GCC5_' Conf/tools_def.txt; then
+            TOOLCHAIN=GCC5
+          else
+            TOOLCHAIN=GCC
+          fi
+          build -a X64 -t "$TOOLCHAIN" -b RELEASE \
             -p OvmfPkg/IntelTdx/IntelTdxX64.dsc \
             -D SECURE_BOOT_ENABLE=FALSE
 
@@ -43,7 +50,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          FV_DIR=$(find Build/IntelTdxX64 -type d -name FV | head -1)
           gh release create "${{ inputs.version }}" \
             --title "Intel TDX OVMF ${{ inputs.version }}" \
             --notes "edk2 digest: $(git rev-parse HEAD)" \
-            Build/IntelTdxX64/RELEASE_GCC5/FV/OVMF.fd#OVMF.fd
+            "$FV_DIR/OVMF.fd#OVMF.fd"
