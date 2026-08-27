@@ -37,11 +37,15 @@ jobs:
           source edksetup.sh
           # tools_def v3.06+ removed the GCC5 tag in favor of GCC; pick
           # whichever the checked-out digest defines.
-          if grep -qE '^\* GCC5_' Conf/tools_def.txt; then
+          if grep -qE '^\*_GCC5_X64_' Conf/tools_def.txt; then
             TOOLCHAIN=GCC5
-          else
+          elif grep -qE '^\*_GCC_X64_' Conf/tools_def.txt; then
             TOOLCHAIN=GCC
+          else
+            echo "No GCC toolchain family found in Conf/tools_def.txt" >&2
+            exit 1
           fi
+          echo "Using toolchain: $TOOLCHAIN"
           build -a X64 -t "$TOOLCHAIN" -b RELEASE \
             -p OvmfPkg/IntelTdx/IntelTdxX64.dsc \
             -D SECURE_BOOT_ENABLE=FALSE
