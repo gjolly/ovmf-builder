@@ -22,7 +22,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential uuid-dev iasl nasm git python3
+          sudo apt-get install -y build-essential uuid-dev iasl nasm bison flex git python3
 
       - name: Checkout edk2
         uses: actions/checkout@v4
@@ -35,6 +35,9 @@ jobs:
         shell: bash
         run: |
           source edksetup.sh
+          # edksetup.sh may skip building the C-based BaseTools (VfrCompile,
+          # GenFw, ...) on a re-setup; build them explicitly.
+          make -C BaseTools -j"$(nproc)"
           # tools_def v3.06+ removed the GCC5 tag in favor of GCC; pick
           # whichever the checked-out digest defines.
           if grep -qE '^\*_GCC5_X64_' Conf/tools_def.txt; then
