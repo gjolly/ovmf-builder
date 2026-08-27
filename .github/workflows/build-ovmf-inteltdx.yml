@@ -57,7 +57,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          FV_DIR=$(find Build/IntelTdxX64 -type d -name FV | head -1)
+          FV_DIR=$(find Build -type d -name FV | head -1)
+          if [ -z "$FV_DIR" ] || [ ! -f "$FV_DIR/OVMF.fd" ]; then
+            echo "OVMF.fd not found under Build/" >&2
+            exit 1
+          fi
           gh release create "${{ inputs.version }}" \
             --title "Intel TDX OVMF ${{ inputs.version }}" \
             --notes "edk2 digest: $(git rev-parse HEAD)" \
