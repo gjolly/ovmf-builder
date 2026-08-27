@@ -63,6 +63,7 @@ jobs:
             exit 1
           fi
           gh release create "${{ inputs.version }}" \
+            --repo "${{ github.repository }}" \
             --title "Intel TDX OVMF ${{ inputs.version }}" \
             --notes "edk2 digest: $(git rev-parse HEAD)" \
             "$FV_DIR/OVMF.fd#OVMF.fd"
